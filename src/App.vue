@@ -3,7 +3,9 @@
 </script>
 
 <template>
-
+  <h1 class="text-green-700">
+    Hellow world
+  </h1>
 </template>
 
 <style scoped>
