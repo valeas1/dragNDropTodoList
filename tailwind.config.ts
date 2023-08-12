@@ -9,6 +9,9 @@ export default {
         main: 'Josefin Sans'
       },
       colors: {
+        'text-blue': '#494C6B',
+        'text-grey': '#D1D2DA',
+        'text-cross': '#4D5067',
         'main-white': '#FAFAFA',
         'main-dark': '#171823',
         'dark-blue': '#25273D',
