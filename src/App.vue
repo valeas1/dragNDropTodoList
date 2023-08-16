@@ -3,10 +3,10 @@ import { onMounted, ref } from 'vue';
 import TodoItem from './TodoItem.vue';
 import { todosItems, type ITodo } from './todos';
 
-  let todosCache = todosItems; //for filter without API
+  let todosCache = [...todosItems]; //for filter without API
 
   const themeMode = ref('light');
-  const todos = ref(todosCache);
+  const todos = ref([...todosCache]);
   const inputValue = ref('');
 
   const toggleTheme = () => {
@@ -32,11 +32,12 @@ import { todosItems, type ITodo } from './todos';
 
   const addTodoHandler = () => {
     const todo: ITodo = {
-      id: todos.value.length + 1,
+      id: new Date().getTime(),
       title: inputValue.value,
       completed: false
     }
 
+    todos.value.push(todo);
     todosCache.push(todo); //for filter without API
 
     inputValue.value = '';
@@ -44,6 +45,7 @@ import { todosItems, type ITodo } from './todos';
 
   const removeTodoHandler = (id: number) => {
     todosCache = todosCache.filter((todo) => todo.id !== id); //for filter without API
+    todos.value = [...todosCache];
   }
 
   const removeCompletedHandler = () => {
@@ -52,16 +54,20 @@ import { todosItems, type ITodo } from './todos';
   }
 
   const completedToggleHandler = (id: number) => {
+    const idx = todos.value.findIndex(todo => todo.id === id)
+    
     const cacheIdx = todosCache.findIndex(item => item.id === id);
+        
+    todos.value[idx] = {...todos.value[idx], completed: !todos.value[idx].completed};
 
     todosCache[cacheIdx].completed = !todosCache[cacheIdx].completed; //for filter without API
   }
 
   const showAllTodos = () => {
-    todos.value = todosCache;
+    todos.value = [...todosCache];
   }
 
-  const showActiveTodos = () => {
+  const showActiveTodos = () => {    
     todos.value = todosCache.filter((todo) => todo.completed === false);
   }
 
@@ -137,7 +143,7 @@ import { todosItems, type ITodo } from './todos';
           <span class="text-text-disable hover:text-text-blue
                         dark:text-dark-text-disable dark:hover:text-border-grey
                         min-[768px]:cursor-pointer min-[768px]:z-10 min-[768px]:text-[14px]">
-                        {{ todos.filter((item)=> item.completed === false).length }} items left
+                        {{ todosCache.filter((item)=> item.completed === false).length }} items left
           </span>
           <span class="text-text-disable hover:text-text-blue
                       dark:text-dark-text-disable dark:hover:text-border-grey
