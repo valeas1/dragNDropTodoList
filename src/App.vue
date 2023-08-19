@@ -2,12 +2,15 @@
 import { onMounted, ref } from 'vue';
 import TodoItem from './TodoItem.vue';
 import { todosItems, type ITodo } from './todos';
+import draggable from 'vuedraggable'
 
-  let todosCache = [...todosItems]; //for filter without API
+  const inputValue = ref('');
 
   const themeMode = ref('light');
-  const todos = ref([...todosCache]);
-  const inputValue = ref('');
+
+  const todos = ref([...todosItems]);
+
+  const activeFilter = ref('all');
 
   const toggleTheme = () => {
     document.body.classList.toggle('dark');
@@ -38,42 +41,51 @@ import { todosItems, type ITodo } from './todos';
     }
 
     todos.value.push(todo);
-    todosCache.push(todo); //for filter without API
 
     inputValue.value = '';
   }
 
   const removeTodoHandler = (id: number) => {
-    todosCache = todosCache.filter((todo) => todo.id !== id); //for filter without API
-    todos.value = [...todosCache];
+    todos.value = todos.value.filter((todo) => todo.id !== id);
   }
 
   const removeCompletedHandler = () => {
     todos.value = todos.value.filter((todo) => todo.completed === false);
-    todosCache = todosCache.filter((todo) => todo.completed === false); //for filter without API
   }
 
   const completedToggleHandler = (id: number) => {
     const idx = todos.value.findIndex(todo => todo.id === id)
-    
-    const cacheIdx = todosCache.findIndex(item => item.id === id);
         
     todos.value[idx] = {...todos.value[idx], completed: !todos.value[idx].completed};
-
-    todosCache[cacheIdx].completed = !todosCache[cacheIdx].completed; //for filter without API
   }
 
   const showAllTodos = () => {
-    todos.value = [...todosCache];
+    activeFilter.value = 'all';
   }
 
-  const showActiveTodos = () => {    
-    todos.value = todosCache.filter((todo) => todo.completed === false);
+  const showActiveTodos = () => {
+    activeFilter.value = 'active';
   }
 
   const showCompletedTodos = () => {
-    todos.value = todosCache.filter((todo) => todo.completed === true)
+    activeFilter.value = 'completed';
   }
+
+  const isShow = (todo: ITodo) => {
+    if(activeFilter.value === 'all') {
+      return true;
+    }
+    if(activeFilter.value === 'active') {
+      if(todo.completed === false) {
+        return true;
+      }
+    }
+    if(activeFilter.value === 'completed') {
+      if(todo.completed === true) {
+        return true;
+      }
+    }
+  } 
 
   onMounted(()=> {
     let theme = window.matchMedia("(prefers-color-scheme: dark)");
@@ -126,16 +138,24 @@ import { todosItems, type ITodo } from './todos';
     </div>
     <div class="px-6 relative top-[-26px] mx-auto pb-16
                 min-[768px]:max-w-xl min-[768px]:px-0 min-[768px]:top-[-32px]">
-      <ul class="shadow flex flex-col">
-        <TodoItem 
-          v-for="todo in todos" 
-          :key="todo.id" 
-          :id="todo.id" 
-          :title="todo.title" 
-          :completed="todo.completed" 
-          @remove="removeTodoHandler"
-          @completed-toggle="completedToggleHandler"></TodoItem>
-      </ul>
+        <draggable 
+          v-model="todos" 
+          tag="ul" 
+          item-key="order"
+          class="shadow flex flex-col"
+        >
+          <template #item="{element: todo}">
+            <TodoItem
+              v-if="isShow(todo)"
+              :key="todo.id" 
+              :id="todo.id"
+              :title="todo.title" 
+              :completed="todo.completed" 
+              @remove="removeTodoHandler"
+              @completed-toggle="completedToggleHandler">
+            </TodoItem>
+          </template>
+          </draggable>
       <div>
         <div class="h-[52px] bg-white flex justify-between px-5 items-center shadow rounded-b-[5px]
                     dark:bg-dark-blue
@@ -143,7 +163,7 @@ import { todosItems, type ITodo } from './todos';
           <span class="text-text-disable hover:text-text-blue
                         dark:text-dark-text-disable dark:hover:text-border-grey
                         min-[768px]:cursor-pointer min-[768px]:z-10 min-[768px]:text-[14px]">
-                        {{ todosCache.filter((item)=> item.completed === false).length }} items left
+                        {{ todos.filter((item)=> item.completed === false).length }} items left
           </span>
           <span class="text-text-disable hover:text-text-blue
                       dark:text-dark-text-disable dark:hover:text-border-grey
