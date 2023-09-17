@@ -1,38 +1,19 @@
 export interface ITodo {
-  id: number
+  _id?: string
+  id?: string
   title: string
   completed: boolean
+  index?: number
 }
 
-export const todosItems: ITodo[] = [
-  {
-    id: 1,
-    title: 'Complete online JavaScript course',
-    completed: true
-  },
-  {
-    id: 2,
-    title: 'Jog around the park 3x',
-    completed: false
-  },
-  {
-    id: 3,
-    title: '10 minutes meditation',
-    completed: false
-  },
-  {
-    id: 4,
-    title: 'Read for 1 hour',
-    completed: false
-  },
-  {
-    id: 5,
-    title: 'Pick up groceries',
-    completed: false
-  },
-  {
-    id: 6,
-    title: 'Complete Todo App on Frontend Mentor',
-    completed: false
-  }
-]
+export const actions = {
+  find: 'https://eu-central-1.aws.data.mongodb-api.com/app/data-qmioz/endpoint/data/v1/action/find',
+  insertOne:
+    'https://eu-central-1.aws.data.mongodb-api.com/app/data-qmioz/endpoint/data/v1/action/insertOne',
+  deleteOne:
+    'https://eu-central-1.aws.data.mongodb-api.com/app/data-qmioz/endpoint/data/v1/action/deleteOne',
+  deleteMany:
+    'https://eu-central-1.aws.data.mongodb-api.com/app/data-qmioz/endpoint/data/v1/action/deleteMany',
+  updateOne:
+    'https://eu-central-1.aws.data.mongodb-api.com/app/data-qmioz/endpoint/data/v1/action/updateOne'
+}

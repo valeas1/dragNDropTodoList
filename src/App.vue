@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import TodoItem from './TodoItem.vue';
-import { todosItems, type ITodo } from './todos';
+import { type ITodo, actions } from './todos';
 import draggable from 'vuedraggable'
+import * as Realm from 'realm-web'
 
   const inputValue = ref('');
 
   const themeMode = ref('light');
 
-  const todos = ref([...todosItems]);
+  const todos = ref<ITodo[]>([] as unknown as ITodo[]);
 
   const activeFilter = ref('all');
 
@@ -35,28 +36,46 @@ import draggable from 'vuedraggable'
 
   const addTodoHandler = () => {
     const todo: ITodo = {
-      id: new Date().getTime(),
       title: inputValue.value,
-      completed: false
+      completed: false,
+      index: todos.value.length,
     }
 
     todos.value.push(todo);
 
+    addTodo(todo);
+
     inputValue.value = '';
   }
 
-  const removeTodoHandler = (id: number) => {
+  const removeTodoHandler = async (id: string) => {
+    console.log(id);
+    
     todos.value = todos.value.filter((todo) => todo.id !== id);
+
+    await deleteTodo(id);
   }
 
-  const removeCompletedHandler = () => {
+  const removeCompletedHandler = async () => {
     todos.value = todos.value.filter((todo) => todo.completed === false);
+    
+    await delteComplete()
   }
 
-  const completedToggleHandler = (id: number) => {
-    const idx = todos.value.findIndex(todo => todo.id === id)
-        
+  const completedToggleHandler = async (id: string) => {
+    const idx = todos.value.findIndex(todo => todo.id === id);
+    
+    await updateTodo(id, 'completed',!todos.value[idx].completed);
+
     todos.value[idx] = {...todos.value[idx], completed: !todos.value[idx].completed};
+  }
+
+  const moveHandler = async (id: string) => {
+    const idx = todos.value.findIndex((item) => item.id === id);
+
+    todos.value[idx].index = idx;
+
+    await updateTodo(id, 'index', idx)
   }
 
   const showAllTodos = () => {
@@ -100,7 +119,116 @@ import draggable from 'vuedraggable'
       localStorage.setItem('theme', 'dark');
       themeMode.value = 'dark';
     }
+
+    getTodos();
   })
+
+  const login = async () => {
+    const atlasApp = new Realm.App({ id: 'data-qmioz' })
+
+      async function loginEmailPassword(email: string, password: string) {
+        // Create an email/password credential
+        const credentials = Realm.Credentials.emailPassword(email, password)
+        // Authenticate the user
+        const user = await atlasApp.logIn(credentials)
+        // 'App.currentUser' updates to match the logged in user
+        return user
+      }
+
+    const user = await loginEmailPassword(import.meta.env.VITE_LOGIN, import.meta.env.VITE_PASSWORD)
+
+    return user.accessToken;
+  }
+
+  const getTodos = async () => {
+    const token = await login();
+    const response = await fetch(actions.find, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Request-Headers': '*', 'Authorization': `Bearer ${token}`},
+      body: JSON.stringify({
+        "collection": "task",
+        "database": "test-task",
+        "dataSource": "test-task",
+        "filter": {},
+        "sort": { "index": 1 }
+      })
+    })
+
+    const json = response.json().then((res) => todos.value = res.documents.map((item: ITodo)=> {
+      return {...item, id: item['_id']}
+    }))
+  }
+
+  const addTodo = async (todo: ITodo) => {
+    const token = await login();
+
+    const response = await fetch(actions.insertOne, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Request-Headers': '*', 'Authorization': `Bearer ${token}`},
+      body: JSON.stringify({
+        "collection": "task",
+        "database": "test-task",
+        "dataSource": "test-task",
+        "document": todo,
+      })
+    })
+  }
+
+  const deleteTodo = async (id: string) => {
+    const token = await login();
+    
+    const response = await fetch(actions.deleteOne, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Request-Headers': '*', 'Authorization': `Bearer ${token}`},
+      body: JSON.stringify({
+        "collection": "task",
+        "database": "test-task",
+        "dataSource": "test-task",
+        "filter": {
+          "_id": {"$oid": id}
+        }
+      })
+    })
+  }
+
+  const delteComplete = async () => {
+    const token = await login();
+    
+    const response = await fetch(actions.deleteMany, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Request-Headers': '*', 'Authorization': `Bearer ${token}`},
+      body: JSON.stringify({
+        "collection": "task",
+        "database": "test-task",
+        "dataSource": "test-task",
+        "filter": {
+          "completed": true
+        }
+      })
+    })
+  }
+
+  const updateTodo = async (id: string, field: string, value: number| boolean) => {
+    const token = await login();
+    
+    const response = await fetch(actions.updateOne, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Request-Headers': '*', 'Authorization': `Bearer ${token}`},
+      body: JSON.stringify({
+        "collection": "task",
+        "database": "test-task",
+        "dataSource": "test-task",
+        "filter": {
+          "_id": {"$oid": id}
+        },
+        "update": {
+          "$set": {
+            [field]: value
+          }
+        }
+      })
+    })
+  }
 </script>
 
 <template>
@@ -149,10 +277,11 @@ import draggable from 'vuedraggable'
               v-if="isShow(todo)"
               :key="todo.id" 
               :id="todo.id"
-              :title="todo.title" 
+              :title="todo.title"
               :completed="todo.completed" 
               @remove="removeTodoHandler"
-              @completed-toggle="completedToggleHandler">
+              @completed-toggle="completedToggleHandler"
+              @move-items="moveHandler">
             </TodoItem>
           </template>
           </draggable>

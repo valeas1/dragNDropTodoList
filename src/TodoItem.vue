@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { onUpdated } from 'vue';
 import type { ITodo } from './todos';
 
-const emit = defineEmits(['remove', 'completedToggle'])
+const emit = defineEmits(['remove', 'completedToggle', 'moveItems'])
 const { id, title, completed } = defineProps<ITodo>();
 
+onUpdated(()=> {
+    emit('moveItems', id)
+})
 
 </script>
 
