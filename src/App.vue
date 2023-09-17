@@ -4,6 +4,7 @@ import TodoItem from './TodoItem.vue';
 import { type ITodo, actions } from './todos';
 import draggable from 'vuedraggable'
 import * as Realm from 'realm-web'
+  document.title = 'Drag and Drop list'
 
   const inputValue = ref('');
 
