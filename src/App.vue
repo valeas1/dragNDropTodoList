@@ -4,6 +4,9 @@ import TodoItem from './TodoItem.vue';
 import { type ITodo, actions } from './todos';
 import draggable from 'vuedraggable'
 import * as Realm from 'realm-web'
+import moon from './assets/img/moon.svg'
+import sun from './assets/img/sun.svg'
+
   document.title = 'Drag and Drop list'
 
   const inputValue = ref('');
@@ -243,7 +246,7 @@ import * as Realm from 'realm-web'
             class="w-4 h-4 
                   min-[768px]:w-5 min-[768px]:h-5
                   min-[1024px]:hover:cursor-pointer" 
-            :src="(themeMode === 'dark')? 'src/assets/img/moon.svg' : 'src/assets/img/sun.svg'" 
+            :src="(themeMode === 'dark')? moon : sun" 
             alt="toggleThemeMode"
             @click="toggleTheme"
             >
